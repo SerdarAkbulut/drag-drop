@@ -19,12 +19,12 @@ export interface BuilderState {
   elements: Array<{
     id: string;
     type: string;
-    content: { text: string } | { object: string };
+    content: { text: string };
     position: {
       x: number | string;
       y: number | string;
-      width: number | string;
-      height: number | string;
+      width: number;
+      height: number;
       minHeight?: number;
       zIndex: number;
       fixed?: boolean;

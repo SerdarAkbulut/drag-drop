@@ -6,14 +6,21 @@ import {
   addElement,
   updateElementPosition,
   deleteElement,
+  updateElementSize,
 } from "../store/builder/builderSlice";
 import ElementRenderer from "./elementRenderer";
-
+import EditElement from "./editElement";
+import { useState } from "react";
+import "react-resizable/css/styles.css";
+import { ResizableBox } from "react-resizable";
 export default function Canvas() {
   const dispatch = useDispatch();
   const { grid } = useSelector((state: RootState) => state.builder.canvas);
   const elements = useSelector((state: RootState) => state.builder.elements);
   const canvas = useSelector((state: RootState) => state.builder.canvas);
+  const [editOpen, setEditOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const type = e.dataTransfer.getData("element-type");
@@ -36,8 +43,20 @@ export default function Canvas() {
         type,
         x: type === "header" ? "0" : type === "footer" ? "0" : x,
         y: type === "header" ? 0 : type === "footer" ? canvas.height - 60 : y,
-        width: type === "header" || type === "footer" ? "100%" : 200,
-        height: type === "header" ? 80 : type === "footer" ? 60 : 120,
+        width:
+          type === "header" || type === "footer"
+            ? "100%"
+            : type === "card"
+            ? 300
+            : 400,
+        height:
+          type === "header"
+            ? 80
+            : type === "footer"
+            ? 60
+            : type === "card"
+            ? 200
+            : 150,
         zIndex:
           type === "header"
             ? 1000
@@ -112,9 +131,28 @@ export default function Canvas() {
   const handleDelete = (id: string) => {
     dispatch(deleteElement(id));
   };
+
+  const handleResize = (e: any, data: any, el: any) => {
+    const aspect = el.position.width / el.position.height;
+
+    const newWidth = data.size.width;
+    const newHeight = Math.round(newWidth / aspect);
+
+    dispatch(
+      updateElementSize({
+        id: el.id,
+        width: newWidth,
+        height: newHeight,
+      })
+    );
+  };
   return (
     <div
-      className={`flex bg-gray-400 relative  w-[${canvas.width}px] h-[${canvas.height}px] overflow-hidden`}
+      className="flex bg-gray-400 relative overflow-hidden"
+      style={{
+        width: canvas.width,
+        height: canvas.height,
+      }}
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
@@ -131,24 +169,62 @@ export default function Canvas() {
           }}
         >
           {el.type !== "header" && el.type !== "footer" && (
-            <div className="flex gap-4 justify-end">
-              <span
-                onMouseDown={(e) => handleDrag(e, el)}
-                className=" hover:cursor-pointer"
-              >
-                Taşı
-              </span>
-              <span
-                onClick={() => handleDelete(el.id)}
-                className=" hover:cursor-pointer"
-              >
-                Sil
-              </span>
-            </div>
+            <>
+              <div className="flex gap-4 justify-end">
+                <button
+                  onClick={() => {
+                    setSelectedId(el.id);
+                    setEditOpen(true);
+                  }}
+                  className=" hover:cursor-pointer"
+                >
+                  Edit
+                </button>
+                <span
+                  onMouseDown={(e) => handleDrag(e, el)}
+                  className=" hover:cursor-pointer"
+                >
+                  Taşı
+                </span>
+                <span
+                  onClick={() => handleDelete(el.id)}
+                  className=" hover:cursor-pointer"
+                >
+                  Sil
+                </span>
+              </div>
+            </>
           )}
-          <ElementRenderer element={el} />
+          {el.type === "header" || el.type === "footer" ? (
+            <div
+              style={{
+                width: el.position.width,
+                height: el.position.height,
+              }}
+            >
+              <ElementRenderer element={el} />
+            </div>
+          ) : (
+            <ResizableBox
+              width={Number(el.position.width)}
+              height={Number(el.position.height)}
+              onResize={(e, data) => handleResize(e, data, el)}
+              resizeHandles={["se"]}
+              lockAspectRatio={false}
+              minConstraints={[300, 200]}
+            >
+              <div style={{ width: "100%", height: "100%" }}>
+                <ElementRenderer element={el} />
+              </div>
+            </ResizableBox>
+          )}
         </div>
       ))}
+      <EditElement
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        elementId={selectedId}
+      />
     </div>
   );
 }

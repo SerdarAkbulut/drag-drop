@@ -24,7 +24,9 @@ export default function ElementRenderer({ element }: { element: any }) {
     case "card":
       return (
         <div className="bg-white shadow-md p-4 rounded border w-full h-full drag-handle">
-          <h3 className="text-lg font-bold mb-2">Card Title</h3>
+          <h3 className="text-lg font-bold mb-2">
+            {element.content.text || "Card Title"}
+          </h3>
           <p className="text-gray-700">Card content</p>
         </div>
       );
@@ -32,9 +34,7 @@ export default function ElementRenderer({ element }: { element: any }) {
     case "text-content":
       return (
         <div className="p-4 w-full h-full drag-handle">
-          <p className="text-gray-800">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-          </p>
+          <p className="text-gray-800">{element.content.text || "Text"}</p>
         </div>
       );
 
